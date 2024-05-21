@@ -14,9 +14,9 @@
 // Basic POD Settings
 {
   "settings" : {
-    "description" : "Sea Level Error between obs and model data",
-    "driver" : "SL_error.py",
-    "long_name" : "Ses Level Error",
+    "description" : "A trial 4th generation POD to read and process data from Data Catalogs",
+    "driver" : "trial_4thgen.py",
+    "long_name" : "4th Generation Trial POD",
     "convention": "cmip",
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4"]

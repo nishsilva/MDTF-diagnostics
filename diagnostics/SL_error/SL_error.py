@@ -79,10 +79,14 @@ n = zos_data['latitude'].max()
 #Saving Data#
 #############
 
-out_path = "{WK_DIR}/obs/netCDF/SL_obs.nc".format(**os.environ)
+WORK_DIR = os.environ['WORK_DIR']
+#out_dir = os.path.join(WORK_DIR, "model")
+#assert os.path.isdir(out_dir), f'{out_dir} not found'
+
+out_path = "{WORK_DIR}/obs/netCDF/SL_obs.nc".format(**os.environ)
 obs_dataset.to_netcdf(out_path)  # Saving mean instead of 'mdt'
 
-out_path = "{WK_DIR}/model/netCDF/SL_model.nc".format(**os.environ)
+out_path = "{WORK_DIR}/model/netCDF/SL_model.nc".format(**os.environ)
 model_mean_zos.to_netcdf(out_path)  # Saving mean instead of 'mdt'
 
 
@@ -107,13 +111,13 @@ error = ds_obs_dtu_rg.mdt_rg - model_mean_zos_rg.zos_rg
 #Saving Regridded Data#
 #######################
 
-out_path = "{WK_DIR}/obs/netCDF/SL_obs_rg.nc".format(**os.environ)
+out_path = "{WORK_DIR}/obs/netCDF/SL_obs_rg.nc".format(**os.environ)
 ds_obs_dtu_rg.to_netcdf(out_path)  # Saving mean instead of 'mdt'
 
-out_path = "{WK_DIR}/model/netCDF/SL_model_rg.nc".format(**os.environ)
+out_path = "{WORK_DIR}/model/netCDF/SL_model_rg.nc".format(**os.environ)
 model_mean_zos_rg.to_netcdf(out_path)  # Saving mean instead of 'mdt'
 
-out_path = "{WK_DIR}/model/netCDF/SL_error.nc".format(**os.environ)
+out_path = "{WORK_DIR}/model/netCDF/SL_error.nc".format(**os.environ)
 error.to_netcdf(out_path)  # Saving mean instead of 'mdt'
 
 print("test")
@@ -129,7 +133,7 @@ fig = plt.figure(figsize=(12, 16), tight_layout=True)
 ax = fig.add_subplot(3, 1, 1, projection=ccrs.Robinson())
 model_mean_zos.zos.plot(ax=ax) 
 
-plot_path = "{WK_DIR}/model.png".format(model_or_obs="model", **os.environ)
+plot_path = "{WORK_DIR}/model.png".format(model_or_obs="model", **os.environ)
 plt.savefig(plot_path, bbox_inches='tight')
 
 # plot error
@@ -138,7 +142,7 @@ fig = plt.figure(figsize=(12, 16), tight_layout=True)
 ax = fig.add_subplot(3, 1, 1, projection=ccrs.Robinson())
 error.plot(ax=ax) 
 
-plot_path = "{WK_DIR}/error.png".format(model_or_obs="model", **os.environ)
+plot_path = "{WORK_DIR}/error.png".format(model_or_obs="model", **os.environ)
 plt.savefig(plot_path, bbox_inches='tight')
 
 def plot_and_save_figure(model_or_obs, title_string, dataset):
@@ -150,7 +154,7 @@ def plot_and_save_figure(model_or_obs, title_string, dataset):
     plot_axes.set_title(title_string)
 
     # build the base file path
-    base_plot_path = "{WK_DIR}/{model_or_obs}/PS/SL_trial_{model_or_obs}_plot".format(
+    base_plot_path = "{WORK_DIR}/{model_or_obs}/PS/SL_trial_{model_or_obs}_plot".format(
         model_or_obs=model_or_obs, **os.environ
     )
 

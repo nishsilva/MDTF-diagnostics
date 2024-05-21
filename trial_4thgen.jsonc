@@ -24,26 +24,26 @@
   // Add other PODs that work on ensemble datasets to the pod_list as needed
   "pod_list" : [
       //"example"
-     "example_multicase"
+     "trial_4thgen"
    ],
    // Each case corresponds to a different simulation/output dataset
    // startdate, enddate: either YYYY-MM-DD, YYYYMMDD:HHMMSS, or YYYY-MM-DD:HHMMSS
    "case_list":
     {
-      "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
+      "zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_1980-1984":
         {
-          "model": "test",
+          "model": "CAMS",
           "convention": "CMIP",
-          "startdate": "19800101120000",
-          "enddate": "19841231000000"
+          "startdate": "1980-01-01 12:00:00",
+          "enddate": "1984-12-31 00:00:00"
         }
       ,
-      "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231":
+      "zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_1985-1989":
         {
-          "model": "test",
+          "model": "CAMS",
           "convention": "CMIP",
-          "startdate": "19850101",
-          "enddate": "19891231"
+          "startdate": "1985-01-01 12:00:00",
+          "enddate": "1989-12-31 00:00:00"
         }
     },
   // PATHS ---------------------------------------------------------------------
@@ -53,7 +53,7 @@
   // "$" and will be expended to their current values when the framework runs.
   // Full or relative path to model data ESM-intake catalog header file
 
-  "DATA_CATALOG": "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+  "DATA_CATALOG": "glade/work/netige/mdtf_Apr24_2/data_catalogs/zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_185001-201412.json",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
@@ -67,12 +67,15 @@
 
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `conda info --base` or `micromamba info`.)
-  "conda_root": "",
+  //"conda_root": "/glade/u/apps/opt/conda",
+  "conda_root": "/glade/u/home/netige/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "",
+  //"conda_env_root": "/glade/u/home/netige/miniconda3/envs",
+  "conda_env_root": "/glade/work/netige/mdtf_Apr24_2/mdtf",
+
 
   // Location of the micromamba executable. Required if using micromamba
   "micromamba_exe": "",
