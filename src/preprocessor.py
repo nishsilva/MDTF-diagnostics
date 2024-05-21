@@ -11,6 +11,7 @@ import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
 import cftime
 import intake
+import math
 import numpy as np
 import xarray as xr
 import collections
@@ -269,7 +270,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         The signature of this method is altered by the :func:`edit_request_wrapper`
         decorator.
         """
-        v_to_translate = None
+
         std_name = getattr(v, 'standard_name', "")
         if std_name not in self._rate_d and std_name not in self._flux_d:
             # logic not applicable to this VE; do nothing and return varlistEntry for
@@ -309,7 +310,10 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             return None
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
-        return new_v
+        v.translation.standard_name = new_tv.standard_name
+        v.translation.units = new_tv.units
+        v.translation.long_name = new_tv.long_name
+        return v
 
     def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
@@ -564,7 +568,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         )
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
-        return new_v
+        v.alternates.append(v.translation)
+        v.translation.name = new_tv.name
+        v.translation.long_name = new_tv.long_name
+        v.translation.units = new_tv.units
+        v.translation.dim_axes = new_tv.dim_axes
+        v.translation.dim_axes_set = new_tv.dim_axes_set
+
+        return v
 
     def execute(self, var, ds, **kwargs):
         """Determine if level extraction is needed (if *var* has a scalar Z
@@ -809,6 +820,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
         try:
+            if not isinstance(group_df['start_time'].values[0], datetime.date):
+                # convert int to date type
+                date_format = ''
+                date_digits = math.floor(math.log10(group_df['start_time'].values[0]))+1
+                match date_digits:
+                    case 8:
+                        date_format = '%Y%m%d'
+                    case 14:
+                        date_format = '%Y%m%d%H%M%S'
+                group_df['start_time'] = pd.to_datetime(group_df['start_time'].values[0], format=date_format)
+                group_df['end_time'] = pd.to_datetime(group_df['end_time'].values[0], format=date_format)
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
