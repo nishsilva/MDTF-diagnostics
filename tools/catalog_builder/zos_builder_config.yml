@@ -4,7 +4,7 @@ convention: cmip
 ## IMPORTANT: Attempting to build a catalog of the entire contents of a pp directory will likely max out available PPAN resources (i.e., it takes longer than 12 hours to build a catalog for atmos/ts/monthly/5yr one node w/16 threads). It is strongly recommended to use include_patterns and/or exclude_patterns to target a specific subset of variables and dates to improve the performance of the catalog builder.
 ## Path(s) to the root directory with the target dataset
 data_root_dirs:
-  - collections/cmip/CMIP6/CMIP/CAMS/CAMS-CSM1-0/historical/r1i1p1f1/Omon/zos/gn/v20190708/zos
+  - /glade/collections/cmip/CMIP6/CMIP/CAMS/CAMS-CSM1-0/historical/r1i1p1f1/Omon/zos/gn/v20190708/zos
  # - /archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp/atmos/ts/monthly/5yr
 ## (optional) dataset id used to determine parser for selected convention. Accepted values: am5
 # dataset_id: am5
