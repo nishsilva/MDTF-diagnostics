@@ -867,11 +867,11 @@ class Date(DateRange):
         """Parse date strings in `YYYY-MM-DD:HH:MM:SS` or `YYYYMMDDHHMMSS` formats.
         """
 
-        if '-' in s or ':' in s:
-            return tuple([int(ss) for ss in re.split('[-:s+]', s)])
+        if '-' in s or ':' in s or ' ' in s:
+            return tuple([int(ss) for ss in re.split('[-:\s+]', s)])
         ans = [int(s[0:4])]
         for i in list(range(4, len(s), 2)):
-            ans.append(int(s[i:(i + 2)]))
+                ans.append(int(s[i:(i + 2)]))
         return tuple(ans)
 
     def format(self, precision=None):

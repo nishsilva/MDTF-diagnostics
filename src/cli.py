@@ -107,17 +107,26 @@ def check_date_format(date_string: str):
     """ Check that the input start and end dates adhere to accepted formats
         Credit: https://stackoverflow.com/questions/23581128/how-to-format-date-string-via-multiple-formats-in-python
     """
-
-    for fmt in ('%Y-%m-%d', '%Y-%m-%d:%H:%M:%S', '%Y%m%d:%H%M%S', '%Y-%m-%d:%H-%M-%S', '%Y%m%d', '%Y%m%d%H%M%S'):
+    accepted_formats = [
+        '%Y-%m-%d',
+        '%Y-%m-%d:%H:%M:%S',
+        '%Y%m%d:%H%M%S',
+        '%Y-%m-%d:%H-%M-%S',
+        '%Y%m%d',
+        '%Y%m%d%H%M%S',
+        '%Y-%m-%d %H:%M:%S'  # Added new format
+    ]
+    
+    for fmt in accepted_formats:
         try:
             return datetime.strptime(date_string, fmt)
         except ValueError:
             pass
-    raise util.exceptions.MDTFBaseException(
-                f"Input date string {date_string} does not match accepted formats: YYYY-mm-dd, YYYYmmdd,"
-                f"YYYYmmdd:HHMMSS, YYYY-mm-dd:HH:MM:SS, YYYY-mm-dd:HH-MM-SS"
-            )
-
+    
+    raise ValueError(
+        f"Input date string {date_string} does not match accepted formats: "
+        "YYYY-mm-dd, YYYYmmdd, YYYYmmdd:HHMMSS, YYYY-mm-dd:HH:MM:SS, YYYY-mm-dd:HH-MM-SS, YYYY-mm-dd HH:MM:SS"
+    )
 
 def verify_case_atts(case_list: util.NameSpace):
     # required case attributes
