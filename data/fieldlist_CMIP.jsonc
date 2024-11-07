@@ -14,19 +14,19 @@
     },
     "$ref": "./cmip6-cmor-tables/Tables/CMIP6_coordinate.json"
    },
-  "aux_coords": {
+  "variables" : {
     "deptho": {
       "standard_name": "sea_floor_depth_below_geoid",
       "units": "m",
+      "realm": "ocean",
       "ndim": 2
     },
     "thkcello": {
       "standard_name": "cell_thickness",
       "units": "m",
+      "realm": "ocean",
       "ndim": 3
-    }
-  },
-  "variables" : {
+    },
     "ua": {
       "standard_name": "eastward_wind",
       "realm": "atmos",
@@ -181,6 +181,14 @@
       "standard_name": "precipitation_flux",
       "realm": "atmos",
       "units": "kg m-2 s-1",
+      "alternate_standard_names": ["rainfall_flux"],
+      "ndim": 3
+    },
+    "rainfall_flux": {
+      "standard_name": "rainfall_flux",
+      "realm": "seaIce",
+      "units": "kg m-2 s-1",
+      "alternate_standard_names": ["precipitation_flux"],
       "ndim": 3
     },
     "prc": {

@@ -9,11 +9,26 @@
   "models": ["CAM4", "CESM2", "CESM"], // others?
   "coords" : {
     // only used for taking slices, unit conversion
-    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
-    "TLONG": {"axis": "X", "standard_name": "array of t-grid longitudes", "units": "degrees_east"},
-    "TLAT": {"axis": "Y", "standard_name": "array of t-grid latitudes", "units": "degrees_north"},
-
+    "lon": {
+      "axis": "X",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "lat": {
+       "axis": "Y",
+       "standard_name": "latitude",
+       "units": "degrees_north"
+    },
+    "TLONG": {
+      "axis": "X",
+      "standard_name": "array of t-grid longitudes",
+      "units": "degrees_east"
+    },
+    "TLAT": {
+      "axis": "Y",
+      "standard_name": "array of t-grid latitudes",
+      "units": "degrees_north"
+    },
     "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -31,20 +46,12 @@
       "units": "centimeters",
       "positive": "down",
       "axis": "Z"
-   },
-    "time": {"axis": "T", "standard_name": "time", "units": "days"}
-  },
-  "aux_coords": {
-    // "deptho": {
-    //   "standard_name": "sea_floor_depth_below_geoid",
-    //   "units": "m",
-    //   "ndim": 2
-    // },
-    // "thkcello": {
-    //   "standard_name": "cell_thickness",
-    //   "units": "m",
-    //   "ndim": 3
-    // }
+    },
+    "time": {
+      "axis": "T",
+      "standard_name": "time",
+      "units": "days"
+    }
   },
   "variables" : {
     "U": {
@@ -70,7 +77,8 @@
       "ndim": 4
     },
     "Z500": {
-      "standard_name": "geopotential_height_500mb",
+      "standard_name": "geopotential_height",
+      "long_name": "geopotential height at 500 hPa",
       "realm": "atmos",
       "units": "m",
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
@@ -106,6 +114,12 @@
       "standard_name": "precipitation_rate",
       "realm": "atmos",
       "units": "m s-1",
+      "ndim": 3
+    },
+    "PRECFLUX": {
+      "standard_name": "precipitation_flux",
+      "realm": "atmos",
+      "units": "kg m-2 s-1",
       "ndim": 3
     },
     "PRECC": {
@@ -256,6 +270,19 @@
       "standard_name": "surface_upward_latent_heat_flux",
       "realm": "atmos",
       "units": "W m-2",
+      "ndim": 3
+    },
+    "tave": {
+      "standard_name": "vertically_integrated_temperature",
+      "realm": "atmos",
+      "units": "K",
+      "ndim": 3
+    },
+    "qsat_int": {
+      "standard_name": "specific_humidity",
+      "long_name": "Vertically integrated saturated specific humidity (surface to 200 mb)",
+      "realm": "atmos",
+      "units": "kg m-2",
       "ndim": 3
     },
     "zos": {

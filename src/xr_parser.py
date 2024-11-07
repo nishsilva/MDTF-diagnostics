@@ -139,13 +139,13 @@ class MDTFCFAccessorMixin(object):
         return ds.coords[t_names[0]].attrs.get('calendar', None)
 
     def _old_axes_dict(self, var_name=None):
-        """Code for the "axes" accessor behavior as defined in `cf\_xarray
+        """Code for the "axes" accessor behavior as defined in `cf_xarray
         <https://cf-xarray.readthedocs.io/en/latest/generated/xarray.DataArray.cf.axes.html#xarray.DataArray.cf.axes>`__,
         which we override in various ways below.
 
         Args:
             var_name (optional): If supplied, return a dict containing the subset
-                of coordinates used by the dependent variable *var\_name*, instead
+                of coordinates used by the dependent variable *var_name*, instead
                 of all coordinates in the dataset.
 
         Returns:
@@ -305,10 +305,10 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
 
         Args:
             var_name (optional): If supplied, return a dict containing the subset
-                of coordinates used by the dependent variable *var\_name*, instead
+                of coordinates used by the dependent variable *var_name*, instead
                 of all coordinates in the dataset.
             filter_set (optional): Optional iterable of coordinate names. If
-                supplied, restrict the returned dict to coordinates in *filter\_set*.
+                supplied, restrict the returned dict to coordinates in *filter_set*.
 
         Returns:
             Dict mapping axis labels to lists of the Dataset variables themselves,
@@ -629,7 +629,7 @@ class DefaultDatasetParser:
 
     def normalize_unit(self, new_attr_d, attr_d):
         """Hook to convert unit strings to values that are correctly parsed by
-        `cfunits <https://ncas-cms.github.io/cfunits/>`__\/`UDUnits2
+        `cfunits <https://ncas-cms.github.io/cfunits/>`__/`UDUnits2
         <https://www.unidata.ucar.edu/software/udunits/>`__. Currently we handle
         the case where "mb" is interpreted as "millibarn", a unit of area (see
         UDUnits `mailing list
@@ -722,10 +722,16 @@ class DefaultDatasetParser:
         """Determine if the dataset attribute value is an approximate match to the expected attribute value"""
         exclude = ["with", "on", "in", "of", "at", "near"]
         our_name_split = [i for i in our_name.split('_') if i not in exclude]
-        ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
+        if isinstance(ds_name, str):
+            ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
+        elif isinstance(ds_name, list):
+            for n in ds_name:
+                print(n)
+            ds_name_split = [i for i in ds_name[0].split('_')]
+
         isect = set(our_name_split).intersection(ds_name_split)
 
-        if len(isect) >= len(our_name_split)-2 and len(isect) > 0:
+        if len(isect) >= len(our_name_split) - 2 and len(isect) > 0:
             return True
         else:
             return False
@@ -757,8 +763,10 @@ class DefaultDatasetParser:
                 - False: Change *ds* to match *our_var*.
         """
         # unpack tuples
+
         our_var, our_attr_name, our_attr = our_attr_tuple
         ds_var, ds_attr_name, ds_attr = ds_attr_tuple
+
         if comparison_func is None:
             comparison_func = (lambda x, y: x == y)
 
@@ -767,6 +775,8 @@ class DefaultDatasetParser:
         fill_ours = (fill_ours and ds_attr is not ATTR_NOT_FOUND)
         if overwrite_ours is not None:
             overwrite_ours = (overwrite_ours and ds_attr is not ATTR_NOT_FOUND)
+
+        self.overwrite_ds = (ds_attr is ATTR_NOT_FOUND)
         if self.overwrite_ds:
             # user set CLI option to force overwrite of ds from our_var
             fill_ds = True
@@ -780,6 +790,11 @@ class DefaultDatasetParser:
                 self.log.info("No %s for '%s' found in dataset; setting to '%s'.",
                               ds_attr_name, ds_var.name, str(our_attr))
                 ds_var.attrs[ds_attr_name] = str(our_attr)
+                return
+            elif ds_var.encoding[ds_attr_name] is not None:
+                self.log.info("No %s for '%s' found in dataset attrs; setting to '%s' from encoding.",
+                              ds_attr_name, ds_var.name, ds_var.encoding[ds_attr_name])
+                ds_var.attrs[ds_attr_name] = ds_var.encoding[ds_attr_name]
                 return
             else:
                 # don't change ds, raise exception
@@ -805,10 +820,17 @@ class DefaultDatasetParser:
                 if fill_ours:
                     # update our attr with value from ds, but also raise error
                     setattr(our_var, our_attr_name, ds_attr)
-                comparison_func = self.approximate_attribute_value(our_attr, ds_attr)
+                if isinstance(our_attr, tuple) and isinstance(ds_attr, tuple):
+                    our_attr_str = [i for i in our_attr if isinstance(i, str)][0]
+                    ds_attr_str = [i for i in ds_attr if isinstance(i, str)][0]
+                    comparison_func = True
+                    if not our_attr_str == ds_attr_str:
+                        comparison_func = self.approximate_attribute_value(our_attr_str, ds_attr_str)
+                else:
+                    comparison_func = self.approximate_attribute_value(our_attr, ds_attr)
                 if not comparison_func:
-                    raise util.MetadataEvent((f"Unexpected {our_attr_name} for variable "
-                                              f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
+                    self.log.warning(f"Unexpected {our_attr_name} for variable "
+                                     f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}').")
                 else:
                     self.log.warning(f"Could not find exact match for {our_var.name} attribute {our_attr_name}"
                                      f"{our_attr}; data processing will proceed with approximate match {ds_attr}")
@@ -852,22 +874,25 @@ class DefaultDatasetParser:
         """Compare attribute of a :class:`~src.data_model.DMVariable` (*our_var*)
         with what's set in the xarray.Dataset (*ds_var*).
         """
+        if ds_var is None:
+            return
         if ds_attr_name is None:
             ds_attr_name = our_attr_name
         our_attr = getattr(our_var, our_attr_name)
         ds_attr = ds_var.attrs.get(ds_attr_name, ATTR_NOT_FOUND)
+
         self.compare_attr(
             (our_var, our_attr_name, our_attr), (ds_var, ds_attr_name, ds_attr),
             **kwargs
         )
 
-    def reconcile_names(self, our_var, ds, ds_var_name, overwrite_ours=None):
+    def reconcile_names(self, our_var, ds, ds_var_name: str, overwrite_ours: bool = False):
         """Reconcile the name and standard_name attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our
         expectations based on the model's convention (*our_var*).
 
         Args:
-            our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
+            our_var (:class:`~translate.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
             ds: xarray Dataset.
             ds_var_name (str): Name of the variable in *ds* we expect to
@@ -875,12 +900,30 @@ class DefaultDatasetParser:
             overwrite_ours (bool, default False): If True, always update the name
                 of *our_var* to what's found in *ds*.
         """
-        # Determine if a variable with the expected name is present at all
-        if ds_var_name not in ds:
-            if self.guess_names:
-                # attempt to match on standard_name attribute if present in data
-                ds_names = [v.name for v in ds.variables \
-                            if v.attrs.get('standard_name', "") == our_var.standard_name]
+        v_names = [v for v in ds.variables]
+        if ds_var_name not in v_names:
+            # check for case sensitivity
+            if ds_var_name.upper() in v_names:
+                ds_var_name = ds_var_name.upper()
+                overwrite_ours = True
+            # try searching for 4-D field instead of variable name for a specific level
+            # (e.g., U instead of U500)
+            else:
+                ds_names = []
+                tv_name = ds_var_name
+                if len(our_var.scalar_coords) > 0:
+                   ds_names.append(''.join(filter(lambda x: not x.isdigit(), tv_name)))
+                else:
+                    # attempt to match on standard_name attribute if present in data
+                    for v in ds.variables:
+                        if hasattr(v, 'name') and ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            ds_names.append(ds.variables[v].name)
+                            break
+                        elif ds.variables[v].attrs.get('name', "") and \
+                                ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            ds_names.append(ds.variables[v].attrs.get('name'))
+                            break
+
                 if len(ds_names) == 1:
                     # success, narrowed down to one guess
                     self.log.info(("Selecting '%s' as the intended name for '%s' "
@@ -893,10 +936,6 @@ class DefaultDatasetParser:
                     # failure
                     raise util.MetadataError(f"Variable name '{ds_var_name}' not "
                                              f"found in dataset: ({list(ds.variables)}).")
-            else:
-                # not guessing; error out
-                raise util.MetadataError(f"Variable name '{ds_var_name}' not found "
-                                         f"in dataset: ({list(ds.variables)}).")
 
         # in all non-error cases: now that variable has been identified in ds,
         # straightforward to compare attrs
@@ -917,6 +956,7 @@ class DefaultDatasetParser:
         # will raise UnitsUndefinedError or log warning if unit attribute missing
         self.check_metadata(ds_var, 'units')
         # Check equivalence of units: if units are not equivalent, raise MetadataEvent
+
         self.reconcile_attr(our_var, ds_var, 'units',
                             comparison_func=units.units_equivalent,
                             fill_ours=True, fill_ds=True
@@ -985,26 +1025,25 @@ class DefaultDatasetParser:
             # "attribute" to compare is tuple of (numerical value, units string),
             # which is converted to unit-ful object by src.units.to_cfunits()
             our_attr = (our_var.value, our_var.units)
-            ds_attr = (float(ds_var), ds_var.attrs.get('units', ATTR_NOT_FOUND))
-            try:
-                self.compare_attr(
-                    (our_var, attr_name, our_attr), (ds_var, attr_name, ds_attr),
-                    comparison_func=comparison_func,
-                    fill_ours=True, fill_ds=False
-                )
-            finally:
-                # cleanup placeholder attr if our_var was altered
-                if hasattr(our_var, attr_name):
-                    our_var.value, new_units = getattr(our_var, attr_name)
-                    our_var.units = units.to_cfunits(new_units)
-                    self.log.debug("Updated (value, units) of '%s' to (%s, %s).",
-                                   our_var.name, our_var.value, our_var.units)
-                    delattr(our_var, attr_name)
+            for i in ds_var.values:
+                ds_attr = (float(i), ds_var.attrs.get('units', ATTR_NOT_FOUND))
+                try:
+                    self.compare_attr(
+                        (our_var, attr_name, our_attr), (ds_var, attr_name, ds_attr),
+                        comparison_func=comparison_func,
+                        fill_ours=True, fill_ds=False
+                    )
+                finally:
+                    # cleanup placeholder attr if our_var was altered
+                    if hasattr(our_var, attr_name):
+                        our_var.value, new_units = getattr(our_var, attr_name)
+                        our_var.units = units.to_cfunits(new_units)
+                        self.log.debug("Updated (value, units) of '%s' to (%s, %s).",
+                                       our_var.name, our_var.value, our_var.units)
+                        delattr(our_var, attr_name)
 
         assert (hasattr(our_var, 'is_scalar') and our_var.is_scalar), \
             self.log.error('is_scalar att missing and/or is_scalar is false for ', our_var)
-        assert ds_var.size == 1, \
-            self.log.error('size neq 1 for ', our_var)
         # Check equivalence of units: if units inequivalent, raises MetadataEvent
         try:
             _compare_value_and_units(
@@ -1032,28 +1071,38 @@ class DefaultDatasetParser:
         expectations based on the model's convention (*our_var*), for the bounds
         on the dimension coordinate *our_coord*.
         """
-        try:
+        if len(ds.cf.bounds) > 0:
             bounds = ds.cf.get_bounds(ds_coord_name)
-        except KeyError:
-            # cf accessor could't find associated bounds variable
+        elif hasattr(ds[ds_coord_name], 'attrs'):
+            if ds[ds_coord_name].attrs.get('bounds', None):
+                bounds = ds[ds_coord_name].bounds
+                if isinstance(bounds, str):
+                    our_coord.bounds_var = None
+                    return
+            else:
+                our_coord.bounds_var = None
+                return
+        else:
+            # cf accessor couldn't find associated bounds variable
+            bounds = None
             our_coord.bounds_var = None
             return
-
         # Inherit standard_name from our_coord if not present (regardless of
         # skip_std_name), overwriting metadata on bounds if different
-        self.reconcile_attr(our_coord, bounds, 'standard_name',
-                            fill_ours=False, fill_ds=True, overwrite_ours=False
-                            )
-        # Inherit units from our_coord if not present (regardless of skip_units),
-        # overwriting metadata on bounds if different
-        self.reconcile_attr(our_coord, bounds, 'units',
-                            comparison_func=units.units_equal,
-                            fill_ours=False, fill_ds=True, overwrite_ours=False
-                            )
-        if our_coord.name != bounds.name:
-            self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
-                           'bounds', our_coord.name, bounds.name)
-        our_coord.bounds_var = bounds
+        if bounds is not None:
+            self.reconcile_attr(our_coord, bounds, 'standard_name',
+                                fill_ours=False, fill_ds=True, overwrite_ours=False
+                                )
+            # Inherit units from our_coord if not present (regardless of skip_units),
+            # overwriting metadata on bounds if different
+            self.reconcile_attr(our_coord, bounds, 'units',
+                                comparison_func=units.units_equal,
+                                fill_ours=False, fill_ds=True, overwrite_ours=False
+                                )
+            if our_coord.name != bounds.name:
+                self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                               'bounds', our_coord.name, bounds.name)
+                our_coord.bounds_var = bounds
 
     def reconcile_dimension_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the
@@ -1164,9 +1213,9 @@ class DefaultDatasetParser:
         coordinates in *translated_var* (our expectation, based on the DataSource's
         naming convention) with attributes actually present in the Dataset *ds*.
         """
-        tv = var.translation  # abbreviate
+        tv = var.translation
         # check name, std_name, units on variable itself
-        self.reconcile_names(tv, ds, tv.name, overwrite_ours=None)
+        self.reconcile_names(tv, ds, tv.name)
         self.reconcile_units(tv, ds[tv.name])
         # check variable's dimension coordinates: names, std_names, units, bounds
         self.reconcile_dimension_coords(tv, ds)
@@ -1210,13 +1259,50 @@ class DefaultDatasetParser:
         t_coord.attrs['calendar'] = self.guess_attr(
             'calendar', cftime_cal, _cf_calendars, default=self.fallback_cal)
 
+    def check_time_units(self, var, ds):
+        """Replaces the units on the time coordinate found in var if
+           one is supplied in the ds, if not replace with ""
+        """
+
+        if 'units' in ds['time'].attrs:
+            ds_T_units = ds['time'].attrs['units']
+        elif 'units' in ds['time'].encoding:
+            ds_T_units = ds['time'].encoding['units']
+        else:
+            ds_T_units = None
+
+        var_T_units = var.translation.T.units
+
+        if ds_T_units is not None:
+            if str(var_T_units) != str(ds_T_units):
+                var.translation.T.units = ds_T_units
+                self.log.info("Units for 'time' on var '%s' found in dataset; setting to '%s'.",
+                              var.translation.name, ds_T_units)
+        else:
+            var.translation.T.units = ""
+            self.log.info("Units for 'time' on var '%s' not found in dataset; setting to ''.",
+                          var.translation.name)
+
+        return
+
     def check_metadata(self, ds_var, *attr_names):
         """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized
         to the case of getting a variable's standard_name.
         """
+        delete_chars = re.compile(r"[\".,'*]")
+        ds_var.attrs = {delete_chars.sub('', k): v for k, v in ds_var.attrs.items()}
+        ds_var.encoding = {delete_chars.sub('', k): v for k, v in ds_var.encoding.items()}
         for attr in attr_names:
             if attr not in ds_var.attrs:
-                ds_var.attrs[attr] = ATTR_NOT_FOUND
+                if attr in ds_var.encoding:
+                    ds_var.attrs[attr] = ds_var.encoding[attr]
+                # TODO: maybe move the following block to reconcile_attrs and refactor
+                elif attr == 'standard_name' and 'long_name' in ds_var.attrs:
+                    ds_var.attrs[attr] = ds_var.attrs['long_name']
+                elif attr == 'standard_name' and 'long_name' in ds_var.encoding:
+                    ds_var.attrs[attr] = ds_var.encoding['long_name']
+                else:
+                    ds_var.attrs[attr] = ATTR_NOT_FOUND
             if ds_var.attrs[attr] is ATTR_NOT_FOUND:
                 raise util.MetadataEvent(
                     f"'{attr}' metadata attribute not found on '{ds_var.name}'."
@@ -1237,7 +1323,18 @@ class DefaultDatasetParser:
             # Only check attributes on the dependent variable var_name and its
             # coordinates.
             tv_name = var.translation.name
-            names_to_check = [tv_name] + list(ds[tv_name].dims)
+            if tv_name in ds.variables:
+                names_to_check = [tv_name] + list(ds[tv_name].dims)
+            # try searching for 4-D field instead of variable name for a specific level
+            # (e.g., U instead of U500)
+            elif len(var.translation.scalar_coords) > 0:
+                var_basename = ''.join(filter(lambda x: not x.isdigit(), tv_name))
+                if var_basename in ds.variables:
+                    names_to_check = [var_basename] + list(ds[var_basename].dims)
+                else:
+                    raise util.MetadataError(f'Did not find variable key {tv_name} or {var_basename}'
+                                             f'in queried xarray dataset.')
+
         for v_name in names_to_check:
             try:
                 self.check_metadata(ds[v_name], 'standard_name', 'units')
@@ -1284,10 +1381,11 @@ class DefaultDatasetParser:
                           use_cftime=True  # use cftime instead of np.datetime64
                           )
         # ds = ds.cf.guess_coord_axis()  # may not need this
-        self.restore_attrs_backup(ds)
-        #self.normalize_metadata(var, ds)
+        # self.restore_attrs_backup(ds)
+        # self.normalize_metadata(var, ds)
         self.check_calendar(ds)
-        #self._post_normalize_hook(var, ds)
+        self.check_time_units(var, ds)
+        # self._post_normalize_hook(var, ds)
 
         if self.disable:
             return ds  # stop here; don't attempt to reconcile
