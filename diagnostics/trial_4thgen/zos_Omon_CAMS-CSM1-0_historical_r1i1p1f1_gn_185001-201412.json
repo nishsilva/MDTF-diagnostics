@@ -183,9 +183,17 @@
       }
     ]
   },
+<<<<<<< HEAD
   "id": "zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_185001-201412",
   "description": null,
   "title": null,
   "last_updated": "2024-05-16T12:23:56Z",
   "catalog_file": "file:///glade/work/netige/mdtf_Apr24_2/mdtf/MDTF-diagnostics/diagnostics/trial_4thgen/zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_185001-201412.csv"
+=======
+  "id": "zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_185001-201412.csv",
+  "description": null,
+  "title": null,
+  "last_updated": "2024-05-16T12:23:56Z",
+  "catalog_file": "file:///glade/work/netige/mdtf_Apr24_2/data_catalogs/zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_185001-201412.csv"
+>>>>>>> main
 }

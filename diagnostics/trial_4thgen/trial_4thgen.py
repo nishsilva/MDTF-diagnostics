@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MDTF Example Diagnostic POD for Multiple Cases / Experiments
 # ================================================================================
 #
@@ -163,3 +164,13 @@ tas_dict = None
 # ----------------------------------------
 print("Last log message by example_multicase POD: finished successfully!")
 sys.exit(0)
+=======
+import os
+import xarray as xr
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs  # Assuming ccrs is Cartopy's Coordinate Reference Systems
+import xesmf as xe
+import numpy as np
+
+print("Libs imported!")
+>>>>>>> main
